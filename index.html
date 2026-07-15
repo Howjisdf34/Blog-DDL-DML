@@ -1,448 +1,363 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bienvenidos a mi blog — Lenguaje SQL (DDL, DML)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --ink:#0F1A18;
-    --teal:#0F3D3E;
-    --teal-deep:#0A2B2C;
-    --paper:#F2EFE6;
-    --paper-dim:#E7E2D3;
-    --amber:#E0932F;
-    --amber-soft:#F3C98A;
-    --line: rgba(15,26,24,0.14);
-    --ddl:#3E7C7A;
-    --dml:#C9762F;
-  }
-  *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'Source Serif 4', serif;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-  }
-  .mono{font-family:'JetBrains Mono', monospace;}
-  a{color:inherit;}
-
-  ::selection{background:var(--amber-soft);}
-
-  /* ---------- Reduced motion ---------- */
-  @media (prefers-reduced-motion: reduce){
-    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}
-  }
-
-  /* ---------- Top bar ---------- */
-  .topbar{
-    position:sticky; top:0; z-index:50;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:14px 28px;
-    background:rgba(242,239,230,0.88);
-    backdrop-filter:blur(8px);
-    border-bottom:1px solid var(--line);
-  }
-  .brand{
-    font-family:'JetBrains Mono', monospace;
-    font-weight:800;
-    font-size:15px;
-    letter-spacing:0.02em;
-    display:flex; align-items:center; gap:8px;
-  }
-  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);display:inline-block;}
-  .navlinks{display:flex; gap:22px; font-family:'JetBrains Mono', monospace; font-size:12.5px; letter-spacing:0.03em; text-transform:uppercase;}
-  .navlinks a{text-decoration:none; opacity:0.65; transition:opacity .2s ease; border-bottom:1px solid transparent;}
-  .navlinks a:hover{opacity:1; border-bottom:1px solid var(--amber);}
-  @media (max-width:720px){ .navlinks{display:none;} }
-
-  /* ---------- Hero ---------- */
-  .hero{
-    position:relative;
-    padding:88px 28px 60px;
-    max-width:1080px;
-    margin:0 auto;
-    overflow:hidden;
-  }
-  .eyebrow{
-    display:inline-flex; align-items:center; gap:10px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase;
-    color:var(--teal);
-    background:var(--paper-dim);
-    border:1px solid var(--line);
-    padding:6px 12px; border-radius:999px;
-    margin-bottom:26px;
-  }
-  .eyebrow .pulse{
-    width:7px;height:7px;border-radius:50%;background:var(--amber);
-    box-shadow:0 0 0 0 rgba(224,147,47,0.6);
-    animation:pulse 2.2s infinite;
-  }
-  @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(224,147,47,0.55);}
-    70%{box-shadow:0 0 0 8px rgba(224,147,47,0);}
-    100%{box-shadow:0 0 0 0 rgba(224,147,47,0);}
-  }
-  h1.title{
-    font-family:'JetBrains Mono', monospace;
-    font-weight:800;
-    font-size:clamp(2.4rem, 6vw, 4.4rem);
-    line-height:1.02;
-    margin:0 0 20px;
-    letter-spacing:-0.01em;
-  }
-  h1.title span{color:var(--teal);}
-  .subtitle{
-    max-width:640px;
-    font-size:1.18rem;
-    color:#2b332f;
-    margin:0 0 34px;
-  }
-  .hero-meta{
-    display:flex; flex-wrap:wrap; gap:12px;
-  }
-  .chip{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    padding:8px 13px;
-    border-radius:8px;
-    background:var(--teal);
-    color:var(--paper);
-  }
-  .chip.alt{background:transparent; border:1px solid var(--ink); color:var(--ink);}
-
-  /* schema table decoration */
-  .schema-card{
-    margin-top:48px;
-    border:1px solid var(--line);
-    border-radius:14px;
-    background:#fff;
-    box-shadow:0 18px 40px -24px rgba(15,26,24,0.35);
-    overflow:hidden;
-  }
-  .schema-head{
-    display:flex; gap:8px; align-items:center;
-    padding:10px 16px;
-    background:var(--teal-deep);
-  }
-  .schema-head span{width:10px;height:10px;border-radius:50%;}
-  .schema-head span:nth-child(1){background:#E0932F;}
-  .schema-head span:nth-child(2){background:#C9762F;}
-  .schema-head span:nth-child(3){background:#3E7C7A;}
-  .schema-head .fname{
-    margin-left:10px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:11.5px;
-    color:var(--amber-soft);
-    letter-spacing:0.03em;
-  }
-  table.result{width:100%; border-collapse:collapse; font-family:'JetBrains Mono', monospace; font-size:13px;}
-  table.result thead th{
-    text-align:left; padding:11px 16px; background:var(--paper-dim);
-    color:var(--teal-deep); font-weight:700; border-bottom:1px solid var(--line);
-    text-transform:uppercase; letter-spacing:0.04em; font-size:11px;
-  }
-  table.result td{padding:11px 16px; border-bottom:1px solid var(--line);}
-  table.result tr:last-child td{border-bottom:none;}
-  table.result tbody tr:hover{background:#FBF9F3;}
-  .tag{padding:3px 8px; border-radius:5px; font-size:11px; font-weight:700;}
-  .tag.ddl{background:rgba(62,124,122,0.15); color:var(--ddl);}
-  .tag.dml{background:rgba(201,118,47,0.15); color:var(--dml);}
-
-  /* ---------- Section shell ---------- */
-  section{
-    max-width:1080px; margin:0 auto; padding:70px 28px;
-    border-top:1px solid var(--line);
-  }
-  .section-label{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12.5px; letter-spacing:0.1em; text-transform:uppercase;
-    color:var(--dml); margin-bottom:10px; display:block;
-  }
-  h2{
-    font-family:'JetBrains Mono', monospace;
-    font-size:clamp(1.6rem, 3.4vw, 2.3rem);
-    margin:0 0 22px;
-    letter-spacing:-0.01em;
-  }
-  p.lead{font-size:1.08rem; max-width:70ch; color:#242c28;}
-
-  .reveal{opacity:0; transform:translateY(22px); transition:opacity .7s ease, transform .7s ease;}
-  .reveal.in{opacity:1; transform:translateY(0);}
-
-  /* ---------- Concept grid ---------- */
-  .concept-grid{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:34px;
-  }
-  @media (max-width:820px){ .concept-grid{grid-template-columns:1fr;} }
-  .concept-card{
-    background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px;
-  }
-  .concept-card .k{
-    font-family:'JetBrains Mono', monospace; font-weight:800; font-size:12px;
-    color:var(--teal); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px; display:block;
-  }
-  .concept-card h3{margin:0 0 8px; font-size:1.15rem; font-family:'Source Serif 4', serif; font-weight:700;}
-  .concept-card p{margin:0; font-size:0.96rem; color:#3a423d;}
-
-  /* ---------- Tabs: DDL / DML ---------- */
-  .tabs{display:flex; gap:0; margin-top:38px; border:1px solid var(--ink); border-radius:12px; overflow:hidden; max-width:460px;}
-  .tab-btn{
-    flex:1; padding:14px 10px; text-align:center; cursor:pointer;
-    font-family:'JetBrains Mono', monospace; font-weight:700; font-size:13px; letter-spacing:0.03em;
-    background:var(--paper); color:var(--ink); border:none; transition:background .25s ease, color .25s ease;
-  }
-  .tab-btn.active{background:var(--ink); color:var(--paper);}
-  .tab-btn:not(:last-child){border-right:1px solid var(--ink);}
-
-  .tab-panel{display:none; margin-top:30px;}
-  .tab-panel.active{display:grid; grid-template-columns:1fr 1fr; gap:26px;}
-  @media (max-width:820px){ .tab-panel.active{grid-template-columns:1fr;} }
-
-  .panel-copy h3{
-    font-family:'JetBrains Mono', monospace; font-size:1.3rem; margin:0 0 12px;
-  }
-  .panel-copy p{color:#2c332e; margin:0 0 16px;}
-  .cmd-list{list-style:none; padding:0; margin:0; display:grid; gap:8px;}
-  .cmd-list li{
-    font-family:'JetBrains Mono', monospace; font-size:13px;
-    background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 14px;
-    display:flex; gap:10px; align-items:baseline;
-  }
-  .cmd-list b{color:var(--teal); min-width:74px; display:inline-block;}
-  #ddl-list .cmd-list b{color:var(--ddl);}
-  #dml-list .cmd-list b{color:var(--dml);}
-
-  .code-block{
-    background:var(--teal-deep); border-radius:12px; padding:20px 22px;
-    font-family:'JetBrains Mono', monospace; font-size:13px; color:#DCEFEC;
-    overflow-x:auto; line-height:1.8; box-shadow:0 16px 34px -22px rgba(15,26,24,0.4);
-  }
-  .code-block .kw{color:var(--amber-soft); font-weight:700;}
-  .code-block .str{color:#B7D8B3;}
-  .code-block .com{color:#7FA79F; font-style:italic;}
-
-  /* ---------- Elements list ---------- */
-  .elements-wrap{margin-top:34px; display:grid; gap:14px;}
-  .element-row{
-    display:grid; grid-template-columns:180px 1fr; gap:20px; align-items:start;
-    padding:18px 0; border-bottom:1px solid var(--line);
-  }
-  .element-row:last-child{border-bottom:none;}
-  .element-row .en{font-family:'JetBrains Mono', monospace; font-weight:800; color:var(--teal); font-size:14px;}
-  .element-row p{margin:0; color:#2c332e;}
-  @media (max-width:640px){ .element-row{grid-template-columns:1fr;} }
-
-  /* ---------- Terminal demo (signature element) ---------- */
-  .terminal{
-    margin-top:36px; border-radius:14px; overflow:hidden;
-    background:#0C1615; box-shadow:0 24px 50px -26px rgba(0,0,0,0.55);
-  }
-  .terminal-bar{
-    display:flex; align-items:center; gap:8px; padding:11px 16px; background:#0A1211; border-bottom:1px solid rgba(255,255,255,0.06);
-  }
-  .terminal-bar span{width:10px;height:10px;border-radius:50%;}
-  .terminal-bar span:nth-child(1){background:#E0932F;}
-  .terminal-bar span:nth-child(2){background:#C9762F;}
-  .terminal-bar span:nth-child(3){background:#3E7C7A;}
-  .terminal-bar .label{margin-left:8px; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:#7FA79F;}
-  .terminal-body{padding:22px; font-family:'JetBrains Mono', monospace; font-size:13.5px; color:#DCEFEC; min-height:210px;}
-  .terminal-line{display:flex; gap:8px; margin-bottom:6px;}
-  .terminal-line .prompt{color:var(--amber-soft);}
-  .caret{display:inline-block; width:8px; height:16px; background:#DCEFEC; animation:blink 1s step-end infinite; vertical-align:middle;}
-  @keyframes blink{50%{opacity:0;}}
-  .terminal-controls{display:flex; gap:10px; margin-top:18px;}
-  .btn{
-    font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700; letter-spacing:0.03em;
-    padding:10px 16px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer;
-    transition:transform .15s ease, background .15s ease;
-  }
-  .btn:hover{transform:translateY(-1px); background:var(--paper-dim);}
-  .btn.primary{background:var(--teal); color:#fff; border-color:var(--teal);}
-  .btn.primary:hover{background:var(--teal-deep);}
-  .terminal-result{margin-top:10px; opacity:0.9;}
-
-  /* ---------- Comparison ---------- */
-  .compare{margin-top:34px; display:grid; grid-template-columns:1fr; overflow:hidden; border:1px solid var(--line); border-radius:14px;}
-  .compare-row{display:grid; grid-template-columns:1fr 1fr; }
-  .compare-row.head{background:var(--ink); color:var(--paper); font-family:'JetBrains Mono', monospace; font-weight:700; font-size:13px; letter-spacing:0.03em; text-transform:uppercase;}
-  .compare-row > div{padding:15px 20px; border-bottom:1px solid var(--line); font-size:0.95rem;}
-  .compare-row:last-child > div{border-bottom:none;}
-  .compare-row > div:first-child{border-right:1px solid var(--line);}
-  .compare-row.head > div:first-child{border-right:1px solid rgba(255,255,255,0.15);}
-
-  /* ---------- Footer ---------- */
-  footer{
-    max-width:1080px; margin:0 auto; padding:50px 28px 70px;
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:20px;
-    border-top:1px solid var(--line);
-    font-family:'JetBrains Mono', monospace; font-size:12px; color:#59615c;
-  }
-  footer .signoff{max-width:420px;}
-  footer b{color:var(--ink);}
-
-  ::-webkit-scrollbar{height:8px; width:8px;}
-  ::-webkit-scrollbar-thumb{background:var(--paper-dim); border-radius:4px;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ohmdail — Servidor de Minecraft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand"><span class="dot"></span> mi-blog<span style="opacity:.4">/</span>bases-de-datos</div>
-  <nav class="navlinks">
-    <a href="#concepto">Concepto</a>
-    <a href="#ddl-dml">DDL &amp; DML</a>
-    <a href="#elementos">Elementos</a>
-    <a href="#terminal">Practica</a>
+  <!-- ═══════════════════════════════════════════
+       CANVAS DE PARTÍCULAS
+  ════════════════════════════════════════════ -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ═══════════════════════════════════════════
+       NAVBAR
+  ════════════════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <span class="logo-icon">⛏</span>
+        <span class="logo-text">Ohmdail</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#status">Estado</a></li>
+        <li><a href="#features">Características</a></li>
+        <li><a href="#commands">Comandos</a></li>
+        <li><a href="#footer" class="nav-discord">Discord</a></li>
+      </ul>
+      <button class="hamburger" id="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu">
+      <a href="#status">Estado</a>
+      <a href="#features">Características</a>
+      <a href="#commands">Comandos</a>
+      <a href="#footer">Discord</a>
+    </div>
   </nav>
-</div>
 
-<header class="hero">
-  <div class="eyebrow"><span class="pulse"></span> TAREA · VIERNES 17/07/2026</div>
-  <h1 class="title">Lenguaje <span>SQL</span><br>DDL &amp; DML</h1>
-  <p class="subtitle">3.1 — Definir el concepto y los elementos del lenguaje estructurado de consulta (SQL): qué es, cómo se organiza y de qué partes está hecho.</p>
-  <div class="hero-meta">
-    <span class="chip">03 · Lenguaje SQL</span>
-    <span class="chip alt">DDL — Data Definition Language</span>
-    <span class="chip alt">DML — Data Manipulation Language</span>
-  </div>
+  <!-- ═══════════════════════════════════════════
+       HERO SECTION
+  ════════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg-grid"></div>
 
-  <div class="schema-card">
-    <div class="schema-head">
-      <span></span><span></span><span></span>
-      <span class="fname">consulta_resultado.sql — 3 rows</span>
-    </div>
-    <table class="result">
-      <thead><tr><th>comando</th><th>tipo</th><th>acción sobre</th></tr></thead>
-      <tbody>
-        <tr><td>CREATE TABLE</td><td><span class="tag ddl">DDL</span></td><td>estructura de la base de datos</td></tr>
-        <tr><td>INSERT INTO</td><td><span class="tag dml">DML</span></td><td>los datos dentro de las tablas</td></tr>
-        <tr><td>SELECT</td><td><span class="tag dml">DML</span></td><td>consulta de información existente</td></tr>
-      </tbody>
-    </table>
-  </div>
-</header>
+    <div class="hero-content">
+      <div class="hero-badge" data-aos="fade-down" data-aos-delay="100">
+        <span class="badge-dot"></span>
+        Servidor Activo · Java Edition
+      </div>
 
-<section id="concepto">
-  <span class="section-label reveal">01 — Concepto</span>
-  <h2 class="reveal">¿Qué es el lenguaje SQL?</h2>
-  <p class="lead reveal">
-    <strong>SQL (Structured Query Language)</strong>, o <strong>Lenguaje Estructurado de Consulta</strong>, es el lenguaje estándar que se usa para comunicarse con una base de datos relacional. A través de él, una persona le indica al gestor de base de datos qué tablas crear, qué datos guardar, modificar o eliminar, y qué información quiere consultar. No es un lenguaje de programación general como Python o Java: está diseñado con un único propósito — describir <em>qué</em> se quiere hacer con los datos, sin tener que programar <em>cómo</em> hacerlo paso a paso.
-  </p>
+      <h1 class="hero-title" data-aos="fade-up" data-aos-delay="200">
+        <span class="title-line">Bienvenido a</span>
+        <span class="title-brand">
+          <span class="brand-letter" style="--d:0">O</span><span class="brand-letter" style="--d:1">h</span><span class="brand-letter" style="--d:2">m</span><span class="brand-letter" style="--d:3">d</span><span class="brand-letter" style="--d:4">a</span><span class="brand-letter" style="--d:5">i</span><span class="brand-letter" style="--d:6">l</span>
+        </span>
+      </h1>
 
-  <div class="concept-grid">
-    <div class="concept-card reveal">
-      <span class="k">Declarativo</span>
-      <h3>Dices qué quieres</h3>
-      <p>El motor de base de datos decide internamente el camino más eficiente para obtenerlo.</p>
-    </div>
-    <div class="concept-card reveal">
-      <span class="k">Estándar</span>
-      <h3>Un mismo idioma</h3>
-      <p>MySQL, PostgreSQL, SQL Server y Oracle comparten la misma base de sintaxis SQL.</p>
-    </div>
-    <div class="concept-card reveal">
-      <span class="k">Relacional</span>
-      <h3>Piensa en tablas</h3>
-      <p>Los datos se organizan en filas y columnas relacionadas entre sí mediante llaves.</p>
-    </div>
-  </div>
-</section>
+      <p class="hero-sub" data-aos="fade-up" data-aos-delay="350">
+        Un mundo donde la comunidad construye el futuro.<br />
+        Economía, survival técnico y aventura sin límites.
+      </p>
 
-<section id="ddl-dml">
-  <span class="section-label reveal">02 — Sublenguajes</span>
-  <h2 class="reveal">DDL y DML: las dos caras de SQL</h2>
-  <p class="lead reveal">SQL se agrupa en sublenguajes según lo que permiten hacer. Los dos fundamentales para esta tarea son <strong>DDL</strong>, que define la estructura de la base de datos, y <strong>DML</strong>, que manipula los datos que viven dentro de esa estructura.</p>
+      <div class="hero-actions" data-aos="fade-up" data-aos-delay="500">
+        <button class="btn-copy" id="copyBtn" onclick="copyIP()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="copyText">Copiar IP del Servidor</span>
+        </button>
+        <a href="https://discord.gg/tu-servidor" class="btn-discord" target="_blank">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.078.11 18.098.127 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          Unirse al Discord
+        </a>
+      </div>
 
-  <div class="tabs reveal">
-    <button class="tab-btn active" data-tab="ddl">DDL</button>
-    <button class="tab-btn" data-tab="dml">DML</button>
-  </div>
+      <div class="ip-display" data-aos="fade-up" data-aos-delay="600">
+        <span class="ip-label">IP del Servidor</span>
+        <code class="ip-code" id="serverIP">play.ohmdail.net</code>
+      </div>
+    </div>
 
-  <div class="tab-panel active" id="panel-ddl">
-    <div class="panel-copy" id="ddl-list">
-      <h3 style="color:var(--ddl)">Data Definition Language</h3>
-      <p>Define, modifica y elimina la <strong>estructura</strong> de la base de datos: tablas, columnas, tipos de datos y relaciones. No toca los datos en sí, sino el "molde" que los contiene.</p>
-      <ul class="cmd-list">
-        <li><b>CREATE</b> crea tablas, bases de datos o vistas nuevas</li>
-        <li><b>ALTER</b> modifica una estructura ya existente</li>
-        <li><b>DROP</b> elimina por completo una tabla u objeto</li>
-        <li><b>TRUNCATE</b> vacía una tabla conservando su estructura</li>
-      </ul>
+    <div class="hero-scroll-hint">
+      <div class="scroll-arrow"></div>
     </div>
-    <div class="code-block">
-<span class="com">-- Definir la estructura de una tabla</span>
-<span class="kw">CREATE TABLE</span> alumnos (
-  id        INT PRIMARY KEY,
-  nombre    VARCHAR(50),
-  carrera   VARCHAR(40)
-);
+  </section>
 
-<span class="com">-- Modificar esa estructura</span>
-<span class="kw">ALTER TABLE</span> alumnos <span class="kw">ADD</span> correo VARCHAR(60);
-    </div>
-  </div>
+  <!-- ═══════════════════════════════════════════
+       STATUS CARD
+  ════════════════════════════════════════════ -->
+  <section class="section" id="status">
+    <div class="container">
+      <div class="section-header" data-aos="fade-up">
+        <span class="section-tag">En Tiempo Real</span>
+        <h2 class="section-title">Estado del Servidor</h2>
+      </div>
 
-  <div class="tab-panel" id="panel-dml">
-    <div class="panel-copy" id="dml-list">
-      <h3 style="color:var(--dml)">Data Manipulation Language</h3>
-      <p>Trabaja con los <strong>datos</strong> que ya viven dentro de las tablas: los agrega, los lee, los actualiza o los borra, sin cambiar la estructura de la base de datos.</p>
-      <ul class="cmd-list">
-        <li><b>SELECT</b> consulta y recupera información</li>
-        <li><b>INSERT</b> agrega nuevas filas de datos</li>
-        <li><b>UPDATE</b> modifica valores ya existentes</li>
-        <li><b>DELETE</b> elimina filas específicas</li>
-      </ul>
-    </div>
-    <div class="code-block">
-<span class="com">-- Agregar un dato a la tabla</span>
-<span class="kw">INSERT INTO</span> alumnos (id, nombre, carrera)
-<span class="kw">VALUES</span> (1, <span class="str">'Ana López'</span>, <span class="str">'Sistemas'</span>);
+      <div class="status-grid" data-aos="fade-up" data-aos-delay="100">
+        <!-- Status principal -->
+        <div class="status-card glass-card" id="statusCard">
+          <div class="status-header">
+            <div class="status-indicator" id="statusIndicator">
+              <span class="status-dot" id="statusDot"></span>
+              <span class="status-text" id="statusText">Verificando...</span>
+            </div>
+            <button class="refresh-btn" onclick="checkServerStatus()" title="Actualizar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            </button>
+          </div>
+          <div class="status-metrics">
+            <div class="metric">
+              <span class="metric-val" id="playerCount">—</span>
+              <span class="metric-label">Jugadores</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric">
+              <span class="metric-val" id="maxPlayers">—</span>
+              <span class="metric-label">Capacidad</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric">
+              <span class="metric-val" id="ping">—</span>
+              <span class="metric-label">Latencia</span>
+            </div>
+          </div>
+          <div class="player-bar-wrap">
+            <div class="player-bar" id="playerBar"></div>
+          </div>
+          <p class="status-version" id="serverVersion">Java Edition · 1.20+</p>
+        </div>
 
-<span class="com">-- Consultar la información guardada</span>
-<span class="kw">SELECT</span> nombre, carrera <span class="kw">FROM</span> alumnos
-<span class="kw">WHERE</span> carrera = <span class="str">'Sistemas'</span>;
+        <!-- Estadísticas secundarias -->
+        <div class="status-stats">
+          <div class="stat-item glass-card" data-aos="fade-left" data-aos-delay="150">
+            <div class="stat-icon">🌍</div>
+            <div class="stat-info">
+              <span class="stat-num">3</span>
+              <span class="stat-desc">Mundos activos</span>
+            </div>
+          </div>
+          <div class="stat-item glass-card" data-aos="fade-left" data-aos-delay="200">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-info">
+              <span class="stat-num">99.8%</span>
+              <span class="stat-desc">Uptime mensual</span>
+            </div>
+          </div>
+          <div class="stat-item glass-card" data-aos="fade-left" data-aos-delay="250">
+            <div class="stat-icon">🛡️</div>
+            <div class="stat-info">
+              <span class="stat-num">Anti-Grief</span>
+              <span class="stat-desc">Protección activa</span>
+            </div>
+          </div>
+          <div class="stat-item glass-card" data-aos="fade-left" data-aos-delay="300">
+            <div class="stat-icon">💾</div>
+            <div class="stat-info">
+              <span class="stat-num">Daily</span>
+              <span class="stat-desc">Backups automáticos</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="compare reveal">
-    <div class="compare-row head"><div>DDL</div><div>DML</div></div>
-    <div class="compare-row"><div>Afecta la estructura de la base de datos</div><div>Afecta el contenido de las tablas</div></div>
-    <div class="compare-row"><div>CREATE, ALTER, DROP, TRUNCATE</div><div>SELECT, INSERT, UPDATE, DELETE</div></div>
-    <div class="compare-row"><div>Los cambios suelen ser permanentes al ejecutarse</div><div>Muchos cambios pueden revertirse con transacciones</div></div>
-  </div>
-</section>
+  <!-- ═══════════════════════════════════════════
+       FEATURES
+  ════════════════════════════════════════════ -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header" data-aos="fade-up">
+        <span class="section-tag">Lo que nos hace únicos</span>
+        <h2 class="section-title">Características del Servidor</h2>
+        <p class="section-sub">Cada detalle fue diseñado para que tu experiencia sea extraordinaria.</p>
+      </div>
 
-<section id="elementos">
-  <span class="section-label reveal">03 — Elementos</span>
-  <h2 class="reveal">Elementos del lenguaje estructurado de consulta</h2>
-  <p class="lead reveal">Toda instrucción SQL se construye combinando estas piezas básicas, igual que una oración combina sujeto, verbo y complementos.</p>
+      <div class="features-grid">
+        <!-- Card 1 -->
+        <div class="feature-card glass-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="feature-glow glow-green"></div>
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">💰</span>
+          </div>
+          <h3 class="feature-title">Economía</h3>
+          <p class="feature-desc">Sistema económico completo con moneda propia, tiendas de jugadores, subastas y mercado global dinámico.</p>
+          <ul class="feature-list">
+            <li>Shops personales</li>
+            <li>Banco in-game</li>
+            <li>Misiones con recompensas</li>
+          </ul>
+          <div class="feature-tag">EssentialsX + ShopGUI</div>
+        </div>
 
-  <div class="elements-wrap">
-    <div class="element-row reveal">
-      <span class="en">Palabras clave</span>
-      <p>Términos reservados del lenguaje como <code class="mono">SELECT</code>, <code class="mono">FROM</code> o <code class="mono">CREATE</code>, que indican la acción a realizar.</p>
+        <!-- Card 2 -->
+        <div class="feature-card glass-card feature-card--highlight" data-aos="fade-up" data-aos-delay="200">
+          <div class="feature-glow glow-gold"></div>
+          <div class="feature-badge">POPULAR</div>
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">⚙️</span>
+          </div>
+          <h3 class="feature-title">Survival Técnico</h3>
+          <p class="feature-desc">Mundo de survival puro con redstone avanzada, farms automáticas y mecánicas vanilla potenciadas.</p>
+          <ul class="feature-list">
+            <li>Mapa sin límites</li>
+            <li>Slimefun habilitado</li>
+            <li>Create Mod compatible</li>
+          </ul>
+          <div class="feature-tag">Vanilla+ · Paper 1.20</div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="feature-card glass-card" data-aos="fade-up" data-aos-delay="300">
+          <div class="feature-glow glow-teal"></div>
+          <div class="feature-icon-wrap">
+            <span class="feature-icon">🧑‍🤝‍🧑</span>
+          </div>
+          <h3 class="feature-title">Comunidad Activa</h3>
+          <p class="feature-desc">Eventos semanales, torneos PvP, construcciones colaborativas y una comunidad latina unida.</p>
+          <ul class="feature-list">
+            <li>Eventos semanales</li>
+            <li>Rangos por antigüedad</li>
+            <li>Soporte 24/7</li>
+          </ul>
+          <div class="feature-tag">+500 miembros</div>
+        </div>
+      </div>
     </div>
-    <div class="element-row reveal">
-      <span class="en">Cláusulas</span>
-      <p>Bloques que acompañan a un comando para precisar su alcance, como <code class="mono">WHERE</code>, <code class="mono">ORDER BY</code> o <code class="mono">GROUP BY</code>.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       COMANDOS
+  ════════════════════════════════════════════ -->
+  <section class="section" id="commands">
+    <div class="container">
+      <div class="section-header" data-aos="fade-up">
+        <span class="section-tag">Guía Rápida</span>
+        <h2 class="section-title">Comandos Esenciales</h2>
+        <p class="section-sub">Todo lo que necesitas para empezar tu aventura en Ohmdail.</p>
+      </div>
+
+      <div class="commands-wrap glass-card" data-aos="fade-up" data-aos-delay="100">
+        <div class="cmd-filter">
+          <button class="cmd-filter-btn active" data-filter="all">Todos</button>
+          <button class="cmd-filter-btn" data-filter="economia">Economía</button>
+          <button class="cmd-filter-btn" data-filter="teletransporte">Teleporte</button>
+          <button class="cmd-filter-btn" data-filter="general">General</button>
+        </div>
+
+        <table class="cmd-table">
+          <thead>
+            <tr>
+              <th>Comando</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-cat="economia">
+              <td><code>/balance</code></td>
+              <td>Ver tu saldo actual</td>
+              <td><span class="cmd-badge badge-eco">Economía</span></td>
+            </tr>
+            <tr data-cat="economia">
+              <td><code>/pay [jugador] [cantidad]</code></td>
+              <td>Transferir dinero a otro jugador</td>
+              <td><span class="cmd-badge badge-eco">Economía</span></td>
+            </tr>
+            <tr data-cat="economia">
+              <td><code>/shop</code></td>
+              <td>Abrir el mercado global</td>
+              <td><span class="cmd-badge badge-eco">Economía</span></td>
+            </tr>
+            <tr data-cat="teletransporte">
+              <td><code>/spawn</code></td>
+              <td>Volver al spawn principal</td>
+              <td><span class="cmd-badge badge-tp">Teleporte</span></td>
+            </tr>
+            <tr data-cat="teletransporte">
+              <td><code>/home [nombre]</code></td>
+              <td>Teletransportarte a tu casa</td>
+              <td><span class="cmd-badge badge-tp">Teleporte</span></td>
+            </tr>
+            <tr data-cat="teletransporte">
+              <td><code>/sethome [nombre]</code></td>
+              <td>Establecer un punto de hogar</td>
+              <td><span class="cmd-badge badge-tp">Teleporte</span></td>
+            </tr>
+            <tr data-cat="teletransporte">
+              <td><code>/tpa [jugador]</code></td>
+              <td>Solicitar teleporte a jugador</td>
+              <td><span class="cmd-badge badge-tp">Teleporte</span></td>
+            </tr>
+            <tr data-cat="general">
+              <td><code>/rank</code></td>
+              <td>Ver tu rango actual</td>
+              <td><span class="cmd-badge badge-gen">General</span></td>
+            </tr>
+            <tr data-cat="general">
+              <td><code>/helpop [mensaje]</code></td>
+              <td>Contactar a los staff</td>
+              <td><span class="cmd-badge badge-gen">General</span></td>
+            </tr>
+            <tr data-cat="general">
+              <td><code>/rules</code></td>
+              <td>Ver las reglas del servidor</td>
+              <td><span class="cmd-badge badge-gen">General</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="element-row reveal">
-      <span class="en">Identificadores</span>
-      <p>Los nombres propios de la base de datos: tablas, columnas, vistas o índices.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <div class="footer-glow"></div>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="footer-logo">⛏ Ohmdail</span>
+          <p class="footer-tagline">Un servidor hecho con pasión por la comunidad.</p>
+          <div class="footer-ip">
+            <span>play.ohmdail.net</span>
+          </div>
+        </div>
+
+        <div class="footer-links-group">
+          <h4>Servidor</h4>
+          <a href="#status">Estado</a>
+          <a href="#features">Características</a>
+          <a href="#commands">Comandos</a>
+        </div>
+
+        <div class="footer-links-group">
+          <h4>Comunidad</h4>
+          <a href="https://discord.gg/tu-servidor" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.078.11 18.098.127 18.11a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            Discord
+          </a>
+          <a href="#">Foro</a>
+          <a href="#">Reglas</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2024 <strong>Ohmdail</strong> · No afiliado con Mojang Studios</p>
+        <p>Hecho con ❤️ para la comunidad latina</p>
+      </div>
     </div>
-    <div class="element-row reveal">
-      <span class="en">Tipos de dato</span>
-      <p>Definen qué clase de valor puede guardar una columna: <code class="mono">INT</code>, <code class="mono">VARCHAR</code>, <code class="mono">DATE</code>, <code class="mono">BOOLEAN</code>, entre otros.</p>
-    </div>
-    <div class="element-row reveal">
-      <span class="en">Operadores</span>
-      <p>Símbolos que comparan o combinan valores: <code class="mono">=</code>, <code class="mono">&lt;</code>, <code class="mono">AND</code>, <code class="mono">OR</code>, <code class="mono">LIKE</code>.</p>
-    </div>
-    <div class
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
