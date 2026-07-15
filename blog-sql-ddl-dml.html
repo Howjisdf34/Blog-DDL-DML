@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL en dos voces · DDL y DML</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F2F7;
+  --paper-2:#FFFFFF;
+  --ink:#23101E;
+  --ink-soft:#5B4655;
+  --plum:#6C2B5A;
+  --plum-deep:#3A1230;
+  --plum-soft:#F0DDEC;
+  --teal:#0E6B6B;
+  --teal-soft:#D8ECEA;
+  --line:#E3D8E4;
+  --display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+  --body:"Source Serif 4",Georgia,serif;
+  --mono:"JetBrains Mono","SFMono-Regular",Consolas,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:clamp(16px,1vw + 14px,18px);
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{width:min(1080px,92vw);margin-inline:auto}
+
+/* ---------- tipografía ---------- */
+h1,h2,h3,.eyebrow,.btn,.badge,th{font-family:var(--display)}
+h1{font-size:clamp(2.4rem,6.2vw,4.6rem);line-height:.98;font-weight:800;letter-spacing:-.03em}
+h2{font-size:clamp(1.7rem,3.4vw,2.6rem);line-height:1.05;font-weight:800;letter-spacing:-.02em}
+h3{font-size:1.05rem;font-weight:600;letter-spacing:-.01em}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+  font-weight:700;color:var(--plum);display:flex;align-items:center;gap:.6rem
+}
+.eyebrow::after{content:"";height:1px;flex:1;background:var(--line)}
+.lede{font-size:clamp(1.05rem,1.6vw,1.25rem);color:var(--ink-soft);max-width:60ch}
+
+/* ---------- hero ---------- */
+.hero{
+  background:var(--plum-deep);
+  color:#F3E6F0;
+  position:relative;overflow:hidden;
+  padding:clamp(2.5rem,7vw,5rem) 0 clamp(3rem,7vw,5rem);
+}
+.hero::before{ /* rejilla de tabla, ambiente */
+  content:"";position:absolute;inset:-2px;pointer-events:none;
+  background:
+    repeating-linear-gradient(to right,rgba(255,255,255,.055) 0 1px,transparent 1px 96px),
+    repeating-linear-gradient(to bottom,rgba(255,255,255,.055) 0 1px,transparent 1px 40px);
+  mask-image:radial-gradient(120% 90% at 70% 0%,#000 30%,transparent 78%);
+  animation:drift 26s linear infinite;
+}
+@keyframes drift{to{background-position:96px 0,0 40px}}
+.hero .eyebrow{color:#E2A9D5}
+.hero .eyebrow::after{background:rgba(255,255,255,.18)}
+.hero-inner{position:relative;display:grid;gap:2.6rem}
+.hero h1{margin:1.1rem 0 1rem}
+.hero h1 .voz-ddl{color:#E29BD3}
+.hero h1 .voz-dml{color:#6ED6CE}
+.hero .lede{color:#CBB4C6}
+.meta{
+  font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;
+  color:#9E7E96;margin-top:1.4rem;display:flex;flex-wrap:wrap;gap:.4rem 1.2rem
+}
+
+/* ---------- consola (elemento firma) ---------- */
+.console{
+  background:var(--paper-2);border-radius:var(--r);overflow:hidden;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 30px 60px -25px rgba(0,0,0,.6);
+}
+.console__bar{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.7rem 1rem;background:#F0E7F0;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-soft);
+  text-transform:uppercase
+}
+.console__grid{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:820px){.console__grid{grid-template-columns:1fr}}
+.console__code{padding:1.1rem;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:.9rem}
+@media(max-width:820px){.console__code{border-right:0;border-bottom:1px solid var(--line)}}
+.badge{
+  display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.14em;
+  padding:.22rem .6rem;border-radius:99px;color:#fff;background:var(--plum);width:fit-content
+}
+.badge[data-lang="DML"]{background:var(--teal)}
+pre{
+  font-family:var(--mono);font-size:.82rem;line-height:1.7;background:#FBF8FB;
+  border:1px dashed var(--line);border-radius:10px;padding:.9rem;overflow-x:auto;
+  min-height:8.5rem;color:var(--plum-deep);white-space:pre-wrap;word-break:break-word
+}
+.cursor{display:inline-block;width:.5ch;background:var(--plum);animation:blink .9s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.controls{display:flex;gap:.6rem;flex-wrap:wrap}
+.btn{
+  font-size:.82rem;font-weight:600;letter-spacing:.02em;cursor:pointer;
+  border:1px solid var(--plum-deep);background:var(--plum-deep);color:#fff;
+  padding:.6rem 1rem;border-radius:99px;transition:transform .18s,background .18s,color .18s
+}
+.btn:hover{transform:translateY(-2px)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;color:var(--plum-deep)}
+.btn.ghost:hover{background:var(--plum-soft)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:6px}
+.note{font-size:.86rem;color:var(--ink-soft);min-height:3.2em}
+.note b{color:var(--plum)}
+.note b.dml{color:var(--teal)}
+.console__data{padding:1.1rem;background:#FCFAFC;display:flex;flex-direction:column;gap:.8rem}
+.data-title{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.empty{
+  border:1px dashed var(--line);border-radius:10px;padding:1.6rem 1rem;text-align:center;
+  color:#9A879A;font-size:.86rem
+}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.76rem}
+th,td{border:1px solid var(--line);padding:.5rem .6rem;text-align:left}
+th{background:var(--plum-soft);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+th.new{animation:pop .55s cubic-bezier(.2,.9,.2,1)}
+tr.new td{animation:slidein .5s cubic-bezier(.2,.9,.2,1)}
+tr.out{animation:fadeout .42s forwards}
+td.upd{animation:flash .9s ease}
+@keyframes pop{from{background:#fff;transform:scale(.9)}}
+@keyframes slidein{from{opacity:0;transform:translateX(-10px);background:var(--teal-soft)}}
+@keyframes fadeout{to{opacity:0;transform:translateX(14px)}}
+@keyframes flash{0%,60%{background:var(--teal-soft)}100%{background:transparent}}
+.table-box.in{animation:pop .5s cubic-bezier(.2,.9,.2,1)}
+.table-box.out{animation:fadeout .42s forwards}
+.steps{display:flex;gap:.4rem;padding:.7rem 1rem;background:#F0E7F0;border-top:1px solid var(--line)}
+.steps span{height:5px;flex:1;border-radius:99px;background:var(--line);transition:background .35s}
+.steps span.done[data-l="DDL"]{background:var(--plum)}
+.steps span.done[data-l="DML"]{background:var(--teal)}
+
+/* ---------- secciones ---------- */
+section{padding:clamp(3rem,7vw,5.5rem) 0;border-bottom:1px solid var(--line)}
+.sec-head{margin-bottom:2rem;display:grid;gap:.9rem}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1rem,3vw,2.4rem)}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1.6rem}
+.card{
+  background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r);
+  padding:1.1rem;border-left:4px solid var(--plum);
+  transition:transform .25s,box-shadow .25s,border-left-width .25s
+}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 34px -22px rgba(58,18,48,.55);border-left-width:9px}
+.card.dml{border-left-color:var(--teal)}
+.card h3{font-family:var(--mono);font-weight:700;font-size:.86rem;letter-spacing:.06em;color:var(--plum)}
+.card.dml h3{color:var(--teal)}
+.card p{font-size:.92rem;color:var(--ink-soft);margin:.4rem 0 .7rem}
+.card pre{min-height:0;font-size:.74rem;background:#FBF8FB}
+.elems{list-style:none;display:grid;gap:.6rem;counter-reset:e}
+.elems li{
+  background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:.85rem 1rem;
+  display:grid;grid-template-columns:auto 1fr;gap:.9rem;align-items:baseline;font-size:.94rem;
+  transition:border-color .2s,transform .2s
+}
+.elems li:hover{border-color:var(--plum);transform:translateX(4px)}
+.elems li b{font-family:var(--mono);font-size:.78rem;color:var(--plum);white-space:nowrap}
+.elems li span{color:var(--ink-soft)}
+.fam{display:grid;gap:.7rem}
+.fam-row{
+  display:grid;grid-template-columns:5.2rem 1fr;gap:1rem;align-items:center;
+  padding:.8rem 1rem;border:1px solid var(--line);border-radius:10px;background:var(--paper-2);
+  font-size:.92rem;color:var(--ink-soft)
+}
+.fam-row .tag{font-family:var(--mono);font-weight:700;font-size:.76rem;color:var(--ink-soft)}
+.fam-row.on{border-color:var(--plum);background:var(--plum-soft);color:var(--plum-deep)}
+.fam-row.on .tag{color:var(--plum)}
+.fam-row.on.t{border-color:var(--teal);background:var(--teal-soft)}
+.fam-row.on.t .tag{color:var(--teal)}
+
+/* comparativa */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--paper-2)}
+.cmp div{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);font-size:.92rem}
+.cmp .h{font-family:var(--display);font-weight:800;font-size:1.1rem;color:#fff;background:var(--plum)}
+.cmp .h.t{background:var(--teal)}
+.cmp .k{grid-column:1/-1;font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);background:#F7F1F6}
+@media(max-width:620px){.cmp div{font-size:.86rem;padding:.75rem .8rem}}
+
+/* quiz */
+.quiz{display:grid;gap:.8rem;margin-top:1.4rem}
+.q{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:1rem;display:grid;gap:.7rem}
+.q code{font-family:var(--mono);font-size:.82rem;color:var(--plum-deep);word-break:break-word}
+.q .opts{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.opt{font-family:var(--display);font-weight:600;font-size:.8rem;padding:.45rem .95rem;border-radius:99px;border:1px solid var(--line);background:transparent;cursor:pointer;transition:.2s}
+.opt:hover{border-color:var(--plum)}
+.q.ok{border-color:var(--teal)}
+.q.bad{border-color:#B33A5B}
+.opt.hit{background:var(--teal);border-color:var(--teal);color:#fff}
+.opt.miss{background:#B33A5B;border-color:#B33A5B;color:#fff}
+.fb{font-size:.85rem;color:var(--ink-soft)}
+.score{font-family:var(--mono);font-size:.8rem;color:var(--plum);letter-spacing:.08em}
+
+footer{padding:2.6rem 0 3.4rem;font-size:.85rem;color:var(--ink-soft)}
+footer b{color:var(--plum)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(20px)}
+.rv.in{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .rv{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <div>
+      <p class="eyebrow">Tarea 3.1 · Bases de datos</p>
+      <h1>SQL habla<br>en <span class="voz-ddl">dos voces</span><br>sobre los mismos datos</h1>
+      <p class="lede">Una construye el envase; la otra mueve lo que va dentro. Esa es toda la diferencia entre <strong>DDL</strong> y <strong>DML</strong>, y esta consola la deja ver comando por comando.</p>
+      <p class="meta"><span>Lenguaje estructurado de consulta</span><span>Entrega: viernes 17/07/2026</span></p>
+    </div>
+
+    <div class="console" id="consola">
+      <div class="console__bar"><span>consola sql · escuela.db</span><span id="stepLabel">paso 1 de 7</span></div>
+      <div class="console__grid">
+        <div class="console__code">
+          <span class="badge" id="badge" data-lang="DDL">DDL</span>
+          <pre><code id="sqlOut"></code><span class="cursor" id="cursor">&nbsp;</span></pre>
+          <div class="controls">
+            <button class="btn" id="run">Ejecutar comando</button>
+            <button class="btn ghost" id="reset">Reiniciar</button>
+          </div>
+          <p class="note" id="note">Pulsa <b>Ejecutar comando</b> para ver qué le hace cada instrucción a la tabla de la derecha.</p>
+        </div>
+        <div class="console__data">
+          <p class="data-title">Estado de la base</p>
+          <div id="tableWrap"></div>
+        </div>
+      </div>
+      <div class="steps" id="steps"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="concepto">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">3.1 · Concepto</p>
+      <h2>Qué es el lenguaje estructurado de consulta</h2>
+      <p class="lede">SQL (<em>Structured Query Language</em>) es el lenguaje estándar para definir, manipular y consultar la información guardada en una base de datos relacional. No describe <em>cómo</em> buscar los datos: describe <em>qué</em> datos se quieren, y el gestor decide el camino.</p>
+    </div>
+    <div class="cols">
+      <div class="rv">
+        <h3>Es declarativo</h3>
+        <p style="color:var(--ink-soft);font-size:.95rem;margin:.5rem 0 1.2rem">Escribes el resultado que esperas. El optimizador del gestor (MySQL, PostgreSQL, SQL Server, Oracle) elige el plan de ejecución.</p>
+        <h3>Es un estándar</h3>
+        <p style="color:var(--ink-soft);font-size:.95rem;margin:.5rem 0 1.2rem">Normalizado por ANSI e ISO desde 1986. Cada gestor añade su dialecto, pero el núcleo se escribe casi igual en todos.</p>
+        <h3>Trabaja con conjuntos</h3>
+        <p style="color:var(--ink-soft);font-size:.95rem;margin:.5rem 0">Una instrucción no actúa sobre un registro: actúa sobre todas las filas que cumplen la condición, de una sola vez.</p>
+      </div>
+      <div class="rv">
+        <p class="eyebrow" style="margin-bottom:1rem">Elementos del lenguaje</p>
+        <ul class="elems">
+          <li><b>Instrucción</b><span>La orden completa, terminada en punto y coma: <em>CREATE</em>, <em>INSERT</em>, <em>SELECT</em>.</span></li>
+          <li><b>Cláusula</b><span>Componente de una instrucción: <em>FROM</em>, <em>WHERE</em>, <em>ORDER BY</em>, <em>GROUP BY</em>.</span></li>
+          <li><b>Predicado</b><span>Condición que se evalúa como verdadero, falso o desconocido y filtra las filas.</span></li>
+          <li><b>Expresión</b><span>Combinación que produce un valor: <em>promedio * 10</em>, <em>nombre</em>.</span></li>
+          <li><b>Operador</b><span>Aritméticos, de comparación, lógicos (<em>AND</em>, <em>OR</em>, <em>NOT</em>) y <em>LIKE</em>, <em>IN</em>, <em>BETWEEN</em>.</span></li>
+          <li><b>Función</b><span>De agregado (<em>COUNT</em>, <em>SUM</em>, <em>AVG</em>, <em>MAX</em>, <em>MIN</em>) o escalares de texto y fecha.</span></li>
+          <li><b>Identificador</b><span>El nombre de una tabla, columna, vista o índice.</span></li>
+          <li><b>Tipo de dato</b><span>Define qué admite cada columna: <em>INT</em>, <em>VARCHAR</em>, <em>DATE</em>, <em>DECIMAL</em>.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="familias">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Sublenguajes</p>
+      <h2>SQL se reparte en cinco familias</h2>
+      <p class="lede">Todas comparten sintaxis, pero cada una tiene un trabajo distinto. Este tema se concentra en las dos primeras.</p>
+    </div>
+    <div class="fam rv">
+      <div class="fam-row on"><span class="tag">DDL</span><span><strong>Definición.</strong> Crea y modifica la estructura: tablas, columnas, índices, restricciones.</span></div>
+      <div class="fam-row on t"><span class="tag">DML</span><span><strong>Manipulación.</strong> Inserta, cambia y borra los datos que viven dentro de esa estructura.</span></div>
+      <div class="fam-row"><span class="tag">DQL</span><span>Consulta. <em>SELECT</em>: recupera información sin alterarla. Muchos autores lo incluyen dentro del DML.</span></div>
+      <div class="fam-row"><span class="tag">DCL</span><span>Control. <em>GRANT</em> y <em>REVOKE</em>: quién puede hacer qué.</span></div>
+      <div class="fam-row"><span class="tag">TCL</span><span>Transacciones. <em>COMMIT</em>, <em>ROLLBACK</em>, <em>SAVEPOINT</em>: confirma o deshace un bloque de cambios.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="ddl">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Familia 1 · Data Definition Language</p>
+      <h2>DDL: el lenguaje que dibuja el envase</h2>
+      <p class="lede">Actúa sobre el esquema, no sobre los registros. Sus cambios suelen confirmarse solos (<em>auto-commit</em>): una vez ejecutados, no hay <em>ROLLBACK</em> que valga en la mayoría de los gestores.</p>
+    </div>
+    <div class="cards">
+      <article class="card rv">
+        <h3>CREATE</h3>
+        <p>Crea un objeto nuevo: base de datos, tabla, vista o índice.</p>
+        <pre>CREATE TABLE alumnos (
+  id      INT PRIMARY KEY,
+  nombre  VARCHAR(50) NOT NULL,
+  grupo   CHAR(4)
+);</pre>
+      </article>
+      <article class="card rv">
+        <h3>ALTER</h3>
+        <p>Modifica la estructura de un objeto que ya existe: agrega, cambia o quita columnas y restricciones.</p>
+        <pre>ALTER TABLE alumnos
+  ADD promedio DECIMAL(4,2);</pre>
+      </article>
+      <article class="card rv">
+        <h3>DROP</h3>
+        <p>Elimina el objeto completo. Se va la estructura y, con ella, todos los datos.</p>
+        <pre>DROP TABLE alumnos;</pre>
+      </article>
+      <article class="card rv">
+        <h3>TRUNCATE</h3>
+        <p>Vacía la tabla de golpe pero conserva su definición. Es más rápido que borrar fila por fila.</p>
+        <pre>TRUNCATE TABLE alumnos;</pre>
+      </article>
+      <article class="card rv">
+        <h3>RENAME</h3>
+        <p>Cambia el nombre de un objeto sin tocar su contenido.</p>
+        <pre>RENAME TABLE alumnos TO estudiantes;</pre>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="dml">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Familia 2 · Data Manipulation Language</p>
+      <h2>DML: el lenguaje que mueve el contenido</h2>
+      <p class="lede">La estructura no se entera. Aquí solo cambian las filas, y cada instrucción vive dentro de una transacción: se puede confirmar con <em>COMMIT</em> o deshacer con <em>ROLLBACK</em>.</p>
+    </div>
+    <div class="cards">
+      <article class="card dml rv">
+        <h3>INSERT</h3>
+        <p>Agrega filas nuevas a una tabla existente.</p>
+        <pre>INSERT INTO alumnos (id, nombre, grupo)
+VALUES (1, 'Ana Rivas', '5B');</pre>
+      </article>
+      <article class="card dml rv">
+        <h3>UPDATE</h3>
+        <p>Cambia valores de las filas que cumplen la condición. Sin <em>WHERE</em>, cambia todas.</p>
+        <pre>UPDATE alumnos
+SET promedio = 8.5
+WHERE id = 2;</pre>
+      </article>
+      <article class="card dml rv">
+        <h3>DELETE</h3>
+        <p>Borra filas concretas. La tabla sigue ahí, vacía o con lo que quedó.</p>
+        <pre>DELETE FROM alumnos
+WHERE promedio &lt; 6;</pre>
+      </article>
+      <article class="card dml rv">
+        <h3>SELECT</h3>
+        <p>Recupera datos. Es la instrucción más usada de SQL; parte de los autores la clasifican aparte, como DQL.</p>
+        <pre>SELECT nombre, promedio
+FROM alumnos
+WHERE grupo = '5B'
+ORDER BY promedio DESC;</pre>
+      </article>
+      <article class="card dml rv">
+        <h3>MERGE</h3>
+        <p>Inserta o actualiza según exista o no la fila. Se conoce como <em>upsert</em>.</p>
+        <pre>MERGE INTO alumnos a
+USING nuevos n ON (a.id = n.id)
+WHEN MATCHED THEN UPDATE SET a.promedio = n.promedio
+WHEN NOT MATCHED THEN INSERT VALUES (n.id, n.nombre);</pre>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="comparativa">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Cara a cara</p>
+      <h2>Dónde se separan</h2>
+    </div>
+    <div class="cmp rv">
+      <div class="h">DDL</div>
+      <div class="h t">DML</div>
+      <div class="k">Sobre qué actúa</div>
+      <div>La estructura: tablas, columnas, índices</div>
+      <div>Los datos: las filas guardadas</div>
+      <div class="k">Instrucciones</div>
+      <div>CREATE · ALTER · DROP · TRUNCATE · RENAME</div>
+      <div>INSERT · UPDATE · DELETE · SELECT · MERGE</div>
+      <div class="k">Cláusula WHERE</div>
+      <div>No aplica</div>
+      <div>Clave: decide a qué filas afecta</div>
+      <div class="k">Transacciones</div>
+      <div>Auto-commit: normalmente no se deshace</div>
+      <div>Se confirma con COMMIT o se deshace con ROLLBACK</div>
+      <div class="k">Quién lo usa</div>
+      <div>Administrador o diseñador de la base</div>
+      <div>La aplicación y el usuario final, todo el día</div>
+      <div class="k">Frecuencia</div>
+      <div>Pocas veces: al diseñar o al migrar</div>
+      <div>Constante: en cada operación del sistema</div>
+    </div>
+  </div>
+</section>
+
+<section id="practica">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Autoevaluación</p>
+      <h2>¿DDL o DML?</h2>
+      <p class="lede">Seis instrucciones. Clasifícalas y comprueba si la diferencia ya quedó clara.</p>
+    </div>
+    <div class="quiz" id="quiz"></div>
+    <p class="score" id="score" style="margin-top:1rem">Aciertos: 0 de 6</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Tarea 3.1</b> · Definir el concepto y elementos del lenguaje estructurado de consulta · Entrega viernes 17/07/2026.</p>
+    <p style="margin-top:.3rem">Los ejemplos siguen sintaxis estándar ANSI SQL; algunos detalles cambian según el gestor.</p>
+  </div>
+</footer>
+
+<script>
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- consola interactiva ---------------- */
+const pasos = [
+  {lang:'DDL', sql:"CREATE TABLE alumnos (\n  id     INT PRIMARY KEY,\n  nombre VARCHAR(50)\n);",
+   nota:'<b>DDL</b> crea la estructura. Existe la tabla, con sus columnas, pero todavía no hay un solo dato dentro.'},
+  {lang:'DDL', sql:"ALTER TABLE alumnos\n  ADD promedio DECIMAL(4,2);",
+   nota:'<b>DDL</b> otra vez: aparece una columna nueva. Cambió el envase, no el contenido.'},
+  {lang:'DML', sql:"INSERT INTO alumnos\nVALUES (1, 'Ana Rivas', 9.2);",
+   nota:'<b class="dml">DML</b> entra en escena: la estructura sigue igual y llega la primera fila.'},
+  {lang:'DML', sql:"INSERT INTO alumnos\nVALUES (2, 'Luis Ortiz', 7.8);",
+   nota:'<b class="dml">DML</b>: otra fila. Insertar nunca modifica columnas ni tipos.'},
+  {lang:'DML', sql:"UPDATE alumnos\nSET promedio = 8.5\nWHERE id = 2;",
+   nota:'<b class="dml">DML</b>: el WHERE elige a quién afecta. Solo cambia esa celda.'},
+  {lang:'DML', sql:"DELETE FROM alumnos\nWHERE id = 1;",
+   nota:'<b class="dml">DML</b>: se va la fila, la tabla se queda. Esta es la diferencia con DROP.'},
+  {lang:'DDL', sql:"DROP TABLE alumnos;",
+   nota:'<b>DDL</b>: desaparece la tabla completa, estructura y datos. Aquí no hay ROLLBACK que la salve.'}
+];
+
+let i = 0, estado = {existe:false, cols:[], filas:[]}, marcas = {}, escribiendo = false;
+const $ = id => document.getElementById(id);
+const sqlOut=$('sqlOut'), badge=$('badge'), note=$('note'), run=$('run'),
+      tableWrap=$('tableWrap'), stepsEl=$('steps'), stepLabel=$('stepLabel'), cursor=$('cursor');
+
+pasos.forEach(p=>{const s=document.createElement('span');s.dataset.l=p.lang;stepsEl.appendChild(s)});
+
+function pintarTabla(){
+  if(!estado.existe){
+    tableWrap.innerHTML = '<p class="empty">Sin objetos en la base.<br>La tabla aparecerá al ejecutar CREATE TABLE.</p>';
+    return;
+  }
+  let html = '<div class="table-box'+(marcas.tabla||'')+'"><table><thead><tr>';
+  estado.cols.forEach(c=>{html += '<th class="'+(marcas.col===c?'new':'')+'">'+c+'</th>'});
+  html += '</tr></thead><tbody>';
+  if(estado.filas.length === 0){
+    html += '<tr><td colspan="'+estado.cols.length+'" style="color:#9A879A">— sin filas —</td></tr>';
+  }
+  estado.filas.forEach(f=>{
+    html += '<tr class="'+(marcas.filaNew===f.id?'new':'')+(marcas.filaOut===f.id?'out':'')+'">';
+    estado.cols.forEach(c=>{
+      const up = marcas.celda && marcas.celda[0]===f.id && marcas.celda[1]===c;
+      html += '<td class="'+(up?'upd':'')+'">'+(f[c]===undefined?'NULL':f[c])+'</td>';
+    });
+    html += '</tr>';
+  });
+  tableWrap.innerHTML = html + '</tbody></table></div>';
+}
+
+function aplicar(n){
+  marcas = {};
+  if(n===0){estado={existe:true, cols:['id','nombre'], filas:[]}; marcas.tabla=' in';}
+  if(n===1){estado.cols.push('promedio'); marcas.col='promedio';}
+  if(n===2){estado.filas.push({id:1,nombre:'Ana Rivas',promedio:'9.20'}); marcas.filaNew=1;}
+  if(n===3){estado.filas.push({id:2,nombre:'Luis Ortiz',promedio:'7.80'}); marcas.filaNew=2;}
+  if(n===4){estado.filas.find(f=>f.id===2).promedio='8.50'; marcas.celda=[2,'promedio'];}
+  if(n===5){
+    marcas.filaOut=1; pintarTabla();
+    setTimeout(()=>{estado.filas=estado.filas.filter(f=>f.id!==1); marcas={}; pintarTabla();}, reduce?0:420);
+    return;
+  }
+  if(n===6){
+    marcas.tabla=' out'; pintarTabla();
+    setTimeout(()=>{estado={existe:false,cols:[],filas:[]}; marcas={}; pintarTabla();}, reduce?0:420);
+    return;
+  }
+  pintarTabla();
+}
+
+function escribir(texto, cb){
+  if(reduce){sqlOut.textContent=texto; cb(); return;}
+  escribiendo=true; sqlOut.textContent=''; let k=0;
+  const t = setInterval(()=>{
+    sqlOut.textContent = texto.slice(0,++k);
+    if(k>=texto.length){clearInterval(t); escribiendo=false; cb();}
+  }, 14);
+}
+
+function ejecutar(){
+  if(escribiendo || i>=pasos.length) return;
+  const p = pasos[i];
+  run.disabled = true;
+  badge.textContent = p.lang; badge.dataset.lang = p.lang;
+  escribir(p.sql, ()=>{
+    aplicar(i);
+    note.innerHTML = p.nota;
+    stepsEl.children[i].classList.add('done');
+    i++;
+    stepLabel.textContent = i>=pasos.length ? 'secuencia completa' : 'paso '+(i+1)+' de '+pasos.length;
+    if(i>=pasos.length){
+      run.textContent='Secuencia terminada';
+      note.innerHTML += ' <em>Reinicia para verlo otra vez.</em>';
+    }else{
+      run.disabled=false; run.textContent='Ejecutar comando';
+    }
+  });
+}
+
+run.addEventListener('click', ejecutar);
+$('reset').addEventListener('click', ()=>{
+  i=0; estado={existe:false,cols:[],filas:[]}; marcas={};
+  sqlOut.textContent=''; badge.textContent='DDL'; badge.dataset.lang='DDL';
+  note.innerHTML='Pulsa <b>Ejecutar comando</b> para ver qué le hace cada instrucción a la tabla de la derecha.';
+  run.disabled=false; run.textContent='Ejecutar comando';
+  stepLabel.textContent='paso 1 de '+pasos.length;
+  [...stepsEl.children].forEach(s=>s.classList.remove('done'));
+  pintarTabla();
+});
+pintarTabla();
+
+/* ---------------- autoevaluación ---------------- */
+const preguntas = [
+  {sql:"ALTER TABLE alumnos ADD correo VARCHAR(80);", r:'DDL', why:'Agrega una columna: cambia la estructura.'},
+  {sql:"UPDATE alumnos SET grupo = '6A' WHERE grupo = '5A';", r:'DML', why:'Cambia valores de filas existentes.'},
+  {sql:"DROP TABLE calificaciones;", r:'DDL', why:'Elimina el objeto completo, no solo su contenido.'},
+  {sql:"DELETE FROM alumnos WHERE promedio < 6;", r:'DML', why:'Borra filas; la tabla sigue existiendo.'},
+  {sql:"CREATE INDEX idx_nombre ON alumnos(nombre);", r:'DDL', why:'Un índice es un objeto del esquema.'},
+  {sql:"INSERT INTO grupos VALUES ('5B', 'Vespertino');", r:'DML', why:'Agrega datos dentro de una estructura ya definida.'}
+];
+let aciertos=0, contestadas=0;
+const quiz=$('quiz'), score=$('score');
+preguntas.forEach((p,n)=>{
+  const el=document.createElement('div'); el.className='q rv';
+  el.innerHTML = '<code>'+p.sql.replace(/</g,'&lt;')+'</code><div class="opts">'+
+    '<button class="opt" data-v="DDL">DDL</button><button class="opt" data-v="DML">DML</button>'+
+    '<span class="fb"></span></div>';
+  el.querySelectorAll('.opt').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(el.dataset.done) return;
+      el.dataset.done='1'; contestadas++;
+      const bien = b.dataset.v===p.r;
+      if(bien){aciertos++; b.classList.add('hit'); el.classList.add('ok');}
+      else{
+        b.classList.add('miss'); el.classList.add('bad');
+        el.querySelector('[data-v="'+p.r+'"]').classList.add('hit');
+      }
+      el.querySelector('.fb').textContent = (bien?'Correcto. ':'Es '+p.r+'. ') + p.why;
+      score.textContent = 'Aciertos: '+aciertos+' de '+preguntas.length +
+        (contestadas===preguntas.length ? (aciertos===preguntas.length?' · perfecto':' · repasa la comparativa') : '');
+    });
+  });
+  quiz.appendChild(el);
+});
+
+/* ---------------- revelado al hacer scroll ---------------- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach((e,k)=>{
+    if(e.isIntersecting){
+      e.target.style.transitionDelay = (k*70)+'ms';
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:.12, rootMargin:'0px 0px -8% 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
